@@ -2,26 +2,24 @@
 # Streamlit playground for autonomy‑identity‑privacy dynamics
 # -----------------------------------------------------------
 # ▸ Launch with:  streamlit run decision_power_ui.py
-# ▸ Requirements: streamlit>=1.30, numpy, pandas, plotly
+# ▸ Requirements: streamlit>=1.30, numpy, pandas  (⚠️ no external plotting libs)
 #
 # The game tracks **decision‑making power** over time among three actors:
 #     • Individuals  (autonomy / identity control)
 #     • Corporations (data‑driven profit & design choices)
 #     • The State    (coercion, security, macro‑steering)
 # plus the evolving **PET adoption rate**.
-# Power flows are influenced by four dial‑up factors:
-#     1) Regulation Strength   – privacy & AI oversight pressure
-#     2) Security Pressure     – perceived threats ➔ surveillance demand
-#     3) Innovation Dividend   – collective learning gains from raw data
-#     4) PET Efficiency        – how much PETs preserve innovation value
-# The sliders let you stress‑test rival futures and watch who ends up
-# calling the shots.
+# Four forces move the system each step:
+#     1) Regulation strength   – privacy & AI oversight pressure
+#     2) Security pressure     – perceived threats ➔ surveillance demand
+#     3) Innovation dividend   – collective learning gains from raw data
+#     4) PET efficiency        – how much PETs preserve innovation value
+# Adjust the sliders, hit ▶️, and watch the built‑in Streamlit charts update.
 
 from __future__ import annotations
 import numpy as np
 import pandas as pd
 import streamlit as st
-import plotly.express as px
 
 st.set_page_config(page_title="Decision‑Power Sandbox", layout="wide")
 
@@ -128,11 +126,9 @@ run_btn = st.sidebar.button("▶️ Run simulation", type="primary")
 
 st.title("🧮 Autonomy‑Identity‑Privacy Power Game")
 st.write(
-    "This toy model lets you explore how decision‑making power shifts between "
-    "individuals, corporations, and the state under different pressures. "
-    "PET adoption modulates the trade‑off between collective learning and "
-    "privacy. Adjust the sliders, run the simulation, then inspect the plots "
-    "and final power distribution."
+    "Explore how decision‑making power shifts among individuals, corporations, "
+    "and the state under varying regulation, security pressure, innovation, "
+    "and PET efficiency. Built‑in Streamlit charts keep external deps to zero."
 )
 
 if run_btn:
@@ -154,18 +150,17 @@ if run_btn:
     cols = st.columns(len(metrics))
     for metric, col in zip(metrics, cols):
         with col:
-            fig = px.line(
-                df[df["metric"] == metric],
-                x="t",
-                y="value",
-                title=metric,
+            subset = (
+                df[df["metric"] == metric]
+                .set_index("t")
+                .sort_index()["value"]
             )
-            fig.update_layout(xaxis_title="Timestep", yaxis_title="Share / Level")
-            st.plotly_chart(fig, use_container_width=True)
+            st.line_chart(subset, height=250)
+            st.caption(metric)
 
     st.markdown("### 📊 Final snapshot")
     last = df[df["t"] == df["t"].max()]
     summary = last.pivot_table(index="metric", values="value")
     st.dataframe(summary.style.format("{:.2f}"), height=200)
 else:
-    st.info("Configure parameters on the left, then click **Run simulation**.")
+    st.info("Configure parameters in the sidebar, then click **Run simulation**.")
